@@ -1,10 +1,21 @@
 import numpy as np
 from controller import Supervisor
-import math
+from PIL import Image
 
 # camera width is 1280 pixels
 TIME_STEP = 64
 SAMPLING_PERIOD = 100
+
+def save_image(image, filename):
+    # convert image to numpy array
+    image_array = np.frombuffer(image, dtype=np.uint8)
+    # reshape array to match the shape of the image
+    image_array = image_array.reshape((camera.getHeight(), camera.getWidth(), 4))
+    # swap red and blue channels
+    image_array = image_array[:, :, [2, 1, 0, 3]]
+    # save image
+    image = Image.fromarray(image_array, mode='RGBA')
+    image.save(filename)
 
 def calculate_line_expected_position(width, bottom_row_of_pixels):
     bottom_row_of_pixels = np.array(bottom_row_of_pixels, dtype=np.float64)
@@ -43,7 +54,6 @@ def run_robot(translation_field, speed_multiplier, steering_multiplier):
     distance = 0
 
     while robot.step(TIME_STEP) != -1:
-        
         robot_z = translation_field.getSFVec3f()[2]
         if robot_z < 0 or robot_z > 0.5:
             break
