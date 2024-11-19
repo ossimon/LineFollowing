@@ -2,29 +2,45 @@ import numpy as np
 from controller import Supervisor
 import math
 
+# camera width is 1280 pixels
 TIME_STEP = 64
 SAMPLING_PERIOD = 100
 
-def calculate_expected_position(width, row_image):
-    row_image = np.array(row_image, dtype=np.float64)
-    darkest_pixel = row_image.min()
-    brightest_pixel = row_image.max()
+def calculate_line_expected_position(width, bottom_row_of_pixels):
+    bottom_row_of_pixels = np.array(bottom_row_of_pixels, dtype=np.float64)
+    darkest_pixel = bottom_row_of_pixels.min()
+    brightest_pixel = bottom_row_of_pixels.max()
     
     # Handle the case where all pixels are identical
     if darkest_pixel == brightest_pixel:
         darkness_intensities = np.ones(width) / width
     else:
-        brightness_intensity = (row_image - darkest_pixel) / (brightest_pixel - darkest_pixel)
+        brightness_intensity = (bottom_row_of_pixels - darkest_pixel) / (brightest_pixel - darkest_pixel)
         darkness_intensities = 1 - brightness_intensity
         darkness_intensities /= darkness_intensities.sum()
 
-    expected_position = np.dot(darkness_intensities, np.arange(width))
-    return expected_position
+    line_expected_position = np.dot(darkness_intensities, np.arange(width))
+    return line_expected_position
 
-def run_robot(translation_field, speed_multipliers, steering_multipliers):
+def decide_action(bottom_row_of_pixels, width, speed_multiplier, steering_multiplier):
+    
+    bottom_row_of_pixels = np.array(bottom_row_of_pixels, dtype=np.float64)
+    bottom_row_of_pixels[bottom_row_of_pixels < 50] = 0
+    bottom_row_of_pixels[bottom_row_of_pixels >= 50] = 255
+
+    line_expected_position = calculate_line_expected_position(width, bottom_row_of_pixels)
+
+    proportion = -1 * (line_expected_position / width - 0.5)
+    speed = 2
+    steering = 0
+
+    speed += speed_multiplier * (0.5 - abs(proportion))
+    steering += steering_multiplier * proportion
+
+    return speed, steering
+
+def run_robot(translation_field, speed_multiplier, steering_multiplier):
     distance = 0
-    last_expected_position = 640
-    last_proportion = 0
 
     while robot.step(TIME_STEP) != -1:
         
@@ -36,28 +52,12 @@ def run_robot(translation_field, speed_multipliers, steering_multipliers):
         width = camera.getWidth()
         row = camera.getHeight() - 1
 
-        row_image = [
+        bottom_row_of_pixels = [
             camera.imageGetGray(image, width, column, row) 
             for column in range(width)
         ]
 
-        expected_position = calculate_expected_position(width, row_image)
-
-        if math.isnan(expected_position):
-            if math.isnan(last_expected_position):
-                break
-            last_expected_position = expected_position
-            continue
-
-        proportion = -1 * (expected_position / width - 0.5)
-        derivative = proportion + last_proportion
-
-        speed = 2
-        steering = 0
-
-        if not math.isnan(expected_position):
-            speed += speed_multipliers[0] * (0.5 - abs(proportion))
-            steering += steering_multipliers[0] * proportion + steering_multipliers[1] * derivative
+        speed, steering = decide_action(bottom_row_of_pixels, width, speed_multiplier, steering_multiplier)
 
         wheels[0].setPosition(steering)
         wheels[1].setPosition(steering)
@@ -97,14 +97,14 @@ if __name__ == "__main__":
 
     wheels = [None] * 4
 
-    speed_multipliers = [5, 0]
-    steering_multipliers = [1, 0]
+    speed_multiplier = 5
+    steering_multiplier = 1
 
     for i in range(1, 10):
         for j in range(1, 10):
-            speed_multipliers[0] = i
-            steering_multipliers[0] = j
+            speed_multiplier = i
+            steering_multiplier = j
 
             reset_robot(translation_field, rotation_field, initial_position, initial_rotation)
-            fitness = run_robot(translation_field, speed_multipliers, steering_multipliers)
+            fitness = run_robot(translation_field, speed_multiplier, steering_multiplier)
             print(f"Fitness: {fitness}")
