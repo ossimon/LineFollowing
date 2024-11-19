@@ -1,0 +1,128 @@
+#VRML_SIM R2023b utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/factory/containers/protos/WoodenBox.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/gctronic/e-puck/protos/E-puck.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/Floor.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/OldSteel.proto"
+
+WorldInfo {
+  basicTimeStep 16
+}
+Viewpoint {
+  orientation -0.32737071322515227 0.6580298699345395 0.6781040527797988 1.2659377630188215
+  position -0.5970213008521507 -0.7824954406211667 1.3296969124542688
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+Floor {
+  size 1 1
+}
+WoodenBox {
+  translation 0.42959 0.433011 0.05
+  size 0.1 0.1 0.1
+}
+WoodenBox {
+  translation -0.430998 0.428838 0.05
+  name "wooden box(1)"
+  size 0.1 0.1 0.1
+}
+E-puck {
+  hidden position_0_0 535.4455661237059
+  hidden position_0_1 536.6507138559839
+  hidden linearVelocity_0 0.026296241668540186 0.056723498841965966 -1.1965761890052865e-07
+  hidden angularVelocity_0 0.016791568368824436 -0.007784349717750394 6.4249013791637435e-09
+  hidden rotation_1 0 -1 0 4.908370293738507
+  hidden linearVelocity_1 0.02625732012624193 0.056639541447920064 -2.315562411289248e-10
+  hidden angularVelocity_1 -2.8319770486365834 1.3128660078239747 4.8629665913121246e-08
+  hidden rotation_2 0 -1 0 3.7032225614605423
+  hidden linearVelocity_2 0.026257320186602533 0.05663954157269915 1.0335901001333609e-10
+  hidden angularVelocity_2 -2.8319770581533104 1.31286598730861 -4.146859922676108e-08
+  translation -0.17357208042266556 0.41892733252785885 -3.197019231314206e-05
+  rotation -0.0005346292916371827 0.0008371299716705775 0.9999995066923438 1.1367020267534698
+  controller "epuck_avoid_collision"
+}
+DEF BALL1 Solid {
+  translation 0.162798 0.227688 0.049589079144162905
+  children [
+    Shape {
+      appearance PBRAppearance {
+        baseColorMap ImageTexture {
+          url [
+            "../textures/red_brick_wall.jpg"
+          ]
+        }
+        roughness 0.5
+        metalness 0
+      }
+      geometry DEF BALL_GEOMETRY Sphere {
+        radius 0.05
+        subdivision 2
+      }
+    }
+  ]
+  boundingObject USE BALL_GEOMETRY
+  physics Physics {
+  }
+  linearVelocity 0 0 8.474247535732205e-09
+}
+DEF BALL2 Solid {
+  translation 0 0 0.049589079144162905
+  children [
+    Shape {
+      appearance PBRAppearance {
+        roughness 1
+        metalness 0
+      }
+      geometry USE BALL_GEOMETRY
+    }
+  ]
+  name "solid(1)"
+  boundingObject USE BALL_GEOMETRY
+  physics Physics {
+  }
+  linearVelocity 0 0 8.474247535732205e-09
+}
+DEF WALL1 Solid {
+  translation 0 0.51 0.025
+  children [
+    DEF WALL Shape {
+      appearance OldSteel {
+      }
+      geometry Box {
+        size 1 0.02 0.05
+      }
+    }
+  ]
+  name "solid(2)"
+  boundingObject USE WALL
+}
+DEF WALL2 Solid {
+  translation 0 -0.51 0.025
+  children [
+    USE WALL
+  ]
+  name "solid(3)"
+  boundingObject USE WALL
+}
+DEF WALL3 Solid {
+  translation 0.51 0 0.025
+  rotation 0 0 1 1.5707996938995747
+  children [
+    USE WALL
+  ]
+  name "solid(4)"
+  boundingObject USE WALL
+}
+DEF WALL4 Solid {
+  translation -0.51 0 0.025
+  rotation 0 0 1 1.5707996938995747
+  children [
+    USE WALL
+  ]
+  name "solid(5)"
+  boundingObject USE WALL
+}
