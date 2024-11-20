@@ -19,6 +19,7 @@ Viewpoint {
   orientation -0.41350078350350117 0.23800536746614873 0.8788461452946664 2.2049633876446406
   position 2.180650233995734 -4.065157977925139 4.517575094169417
   follow "robot"
+  followType "None"
 }
 TexturedBackground {
 }
@@ -147,7 +148,7 @@ DEF ROBOT Robot {
       ]
       endPoint DEF Wheel1 Solid {
         translation 0.075 0.0725 0
-        rotation 1 1.1695329175413194e-14 8.65512010715984e-15 1.5707996938993516
+        rotation 1 1.1442029529419926e-14 8.478485002932089e-15 1.5707996938993514
         children [
           DEF WHEEL Shape {
             appearance PBRAppearance {
@@ -195,7 +196,7 @@ DEF ROBOT Robot {
       ]
       endPoint DEF Wheel2 Solid {
         translation 0.075 -0.0725 0
-        rotation 1 9.384813215683817e-15 1.2599970768246006e-14 1.5707996938993978
+        rotation 1 9.305235421331215e-15 1.2482214032094181e-14 1.5707996938993969
         children [
           USE WHEEL
         ]
@@ -218,7 +219,7 @@ DEF ROBOT Robot {
       ]
       endPoint DEF Wheel3 Solid {
         translation -0.075 0.0825 0
-        rotation 1 -2.3551347230366163e-15 -1.570089815357744e-16 1.5707996938994153
+        rotation 1 -2.2766302322687305e-15 0 1.5707996938994144
         children [
           USE WHEEL
         ]
@@ -240,7 +241,7 @@ DEF ROBOT Robot {
       ]
       endPoint DEF Wheel4 Solid {
         translation -0.075 -0.0825 0
-        rotation -1 8.345473293930652e-10 8.345353182059492e-10 4.712385618024479
+        rotation -1 8.345475219743943e-10 8.345355132405438e-10 4.712385618024479
         children [
           USE WHEEL
         ]
@@ -254,6 +255,6 @@ DEF ROBOT Robot {
   boundingObject USE BODY
   physics Physics {
   }
-  controller "python_line_recognition"
+  controller "RL_controller"
   supervisor TRUE
 }

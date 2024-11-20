@@ -1,10 +1,13 @@
 import numpy as np
 from controller import Supervisor
 from PIL import Image
+from time import time
 
 # camera width is 1280 pixels
 TIME_STEP = 64
 SAMPLING_PERIOD = 100
+
+start_time = 0
 
 def save_image(image, filename):
     # convert image to numpy array
@@ -52,10 +55,13 @@ def decide_action(bottom_row_of_pixels, width, speed_multiplier, steering_multip
 
 def run_robot(translation_field, speed_multiplier, steering_multiplier):
     distance = 0
+    start = time()
 
     while robot.step(TIME_STEP) != -1:
+        if time() - start > 5:
+            break
         robot_z = translation_field.getSFVec3f()[2]
-        if robot_z < 0 or robot_z > 0.5:
+        if robot_z < 0 or robot_z > 15:
             break
 
         image = camera.getImage()
@@ -92,6 +98,10 @@ def reset_robot(translation_field, rotation_field, initial_position, initial_rot
     translation_field.setSFVec3f(initial_position)
     rotation_field.setSFRotation(initial_rotation)
 
+    robot_node = robot.getFromDef("ROBOT")
+    robot_node.resetPhysics()
+
+
 if __name__ == "__main__":
     robot = Supervisor()
     robot_node = robot.getFromDef("ROBOT")
@@ -108,13 +118,10 @@ if __name__ == "__main__":
     wheels = [None] * 4
 
     speed_multiplier = 5
-    steering_multiplier = 1
+    steering_multiplier = 2
 
-    for i in range(1, 10):
-        for j in range(1, 10):
-            speed_multiplier = i
-            steering_multiplier = j
-
-            reset_robot(translation_field, rotation_field, initial_position, initial_rotation)
-            fitness = run_robot(translation_field, speed_multiplier, steering_multiplier)
-            print(f"Fitness: {fitness}")
+    for try_number in range(10):
+        print(f"Try number: {try_number}")
+        reset_robot(translation_field, rotation_field, initial_position, initial_rotation)
+        fitness = run_robot(translation_field, speed_multiplier, steering_multiplier)
+        print(f"Fitness: {fitness}")
