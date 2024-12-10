@@ -3,7 +3,6 @@
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackground.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/objects/floors/protos/Floor.proto"
-EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/appearances/protos/OldSteel.proto"
 EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/projects/robots/nvidia/jetbot/protos/JetBotRaspberryPiCamera.proto"
 
 WorldInfo {
@@ -16,8 +15,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.41350078350350117 0.23800536746614873 0.8788461452946664 2.2049633876446406
-  position 2.180650233995734 -4.065157977925139 4.517575094169417
+  orientation -0.49308100132475946 0.49928398748826736 0.7124511393565093 1.8916912886598203
+  position -0.39596318294120736 -4.126383085866985 11.972233179691486
   follow "robot"
   followType "None"
 }
@@ -31,56 +30,16 @@ Floor {
   appearance PBRAppearance {
     baseColorMap ImageTexture {
       url [
-        "../textures/gimp_track.png"
+        "../textures/hard_track.png"
       ]
     }
     roughness 1
     metalness 0
   }
 }
-DEF WALL1 Solid {
-  translation 0 2.51 0.025
-  children [
-    DEF WALL Shape {
-      appearance OldSteel {
-      }
-      geometry Box {
-        size 3 0.02 0.05
-      }
-    }
-  ]
-  name "solid(2)"
-  boundingObject USE WALL
-}
-DEF WALL2 Solid {
-  translation 0 -2.51 0.025
-  children [
-    USE WALL
-  ]
-  name "solid(3)"
-  boundingObject USE WALL
-}
-DEF WALL3 Solid {
-  translation 2.51 0 0.025
-  rotation 0 0 1 1.5707996938995747
-  children [
-    USE WALL
-  ]
-  name "solid(4)"
-  boundingObject USE WALL
-}
-DEF WALL4 Solid {
-  translation -2.51 0 0.025
-  rotation 0 0 1 1.5707996938995747
-  children [
-    USE WALL
-  ]
-  name "solid(5)"
-  boundingObject USE WALL
-}
 DEF ROBOT Robot {
-  translation 0.302759 -1.11344 0.04
-  rotation 0 0 1 3.14159
+  translation -1.94038 -0.280031 0.04
+  rotation 0 0 -1 -1.5707953071795862
   children [
     JetBotRaspberryPiCamera {
       translation 0.11 0 0.07
@@ -148,7 +107,7 @@ DEF ROBOT Robot {
       ]
       endPoint DEF Wheel1 Solid {
         translation 0.075 0.0725 0
-        rotation 1 1.1442029529419926e-14 8.478485002932089e-15 1.5707996938993514
+        rotation 1 1.3194274296012771e-14 6.636082735223269e-15 1.5707996938993234
         children [
           DEF WHEEL Shape {
             appearance PBRAppearance {
@@ -196,7 +155,7 @@ DEF ROBOT Robot {
       ]
       endPoint DEF Wheel2 Solid {
         translation 0.075 -0.0725 0
-        rotation 1 9.305235421331215e-15 1.2482214032094181e-14 1.5707996938993969
+        rotation 1 8.610348014768654e-15 1.5131740595510523e-14 1.57079969389938
         children [
           USE WHEEL
         ]
@@ -218,8 +177,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint DEF Wheel3 Solid {
-        translation -0.075 0.0825 0
-        rotation 1 -2.2766302322687305e-15 0 1.5707996938994144
+        translation -0.07500000000000001 0.08250000000000068 -5.510028035265896e-18
+        rotation 1 -3.7730192466487225e-10 3.7729854897176924e-10 1.5707996938993893
         children [
           USE WHEEL
         ]
@@ -240,8 +199,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint DEF Wheel4 Solid {
-        translation -0.075 -0.0825 0
-        rotation -1 8.345475219743943e-10 8.345355132405438e-10 4.712385618024479
+        translation -0.07499999999999996 -0.0825000000000029 -3.378333624605886e-17
+        rotation 1 -7.617471317606674e-10 -9.073374784506339e-10 1.570799689155092
         children [
           USE WHEEL
         ]
@@ -255,6 +214,6 @@ DEF ROBOT Robot {
   boundingObject USE BODY
   physics Physics {
   }
-  controller "RL_controller"
+  controller "baseline"
   supervisor TRUE
 }

@@ -98,8 +98,7 @@ def reset_robot(translation_field, rotation_field, initial_position, initial_rot
     translation_field.setSFVec3f(initial_position)
     rotation_field.setSFRotation(initial_rotation)
 
-    robot_node = robot.getFromDef("ROBOT")
-    robot_node.resetPhysics()
+    robot.simulationResetPhysics()
 
 
 if __name__ == "__main__":
