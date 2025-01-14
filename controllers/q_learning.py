@@ -36,13 +36,23 @@ class QLearner:
     def update_q_value(self, state, action, reward, next_state):
         max_future_q = max(self.q_dict[tuple(next_state)].values())
         current_q = self.q_dict[tuple(state)][action]
-        alpha = self.config.get("alpha", 0.1)
         gamma = self.config.get("gamma", 0.99)
-        self.q_dict[tuple(state)][action] = (1 - alpha) * current_q + alpha * (reward + gamma * max_future_q)
+        self.q_dict[tuple(state)][action] = (1 - self.alpha) * current_q + self.alpha * (reward + gamma * max_future_q)
 
     def train(self, episodes, max_step=1000):
+        epsilon_max = self.config.get("epsilon_max", 0.9)
+        epsilon_min = self.config.get("epsilon_min", 0.1)
+        epsilon_decay = self.config.get("epsilon_decay", 0.01)
+        alpha_max = self.config.get("alpha_max", 0.5)
+        alpha_min = self.config.get("alpha_min", 0.1)
+        alpha_decay = self.config.get("alpha_decay", 0.01)
+
         for episode in range(episodes):
-            print(f"[Notification]: Starting episode {episode + 1}.")
+            self.epsilon = epsilon_min + (epsilon_max - epsilon_min) * np.exp(-epsilon_decay * episode)
+            self.alpha = alpha_min + (alpha_max - alpha_min) * np.exp(-alpha_decay * episode)
+
+            print(f"[Notification]: Starting episode {episode + 1}. Epsilon: {self.epsilon:.4f}, Alpha: {self.alpha:.4f}")
+
             current_step = 0
             state = self.discretize(self.env.reset())
             done = False
@@ -59,8 +69,9 @@ class QLearner:
 
                 if current_step > max_step:
                     done = True
-                    print("[Notification]: Max_step per episode achived.")
-            print(f"[Notification]: Episode {episode + 1} completed. Total reward: {total_reward}.")
+                    print("[Notification]: Max_step per episode achieved.")
+
+            print(f"[Notification]: Episode {episode + 1} completed. Total reward: {total_reward:.2f}.")
         print("[Notification]: Training completed. Q-table:")
         print(self.q_dict)
 
@@ -83,8 +94,6 @@ class QLearner:
         average_reward = np.mean(total_rewards)
         print(f"[Notification]: Average reward over {episodes} test episodes: {average_reward:.2f}.")
         return average_reward
-
-# Usage Example
 
 
 def map_to_buckets(value: float, min_value: float, max_value: float, bucket_sizes: List[float]) -> int:

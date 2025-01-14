@@ -120,10 +120,9 @@ class LineFollowingEnv(gym.Env):
         return observation, reward, done, {}
 
     def _get_observation(self):
-        # Calculate current speed from the robot's wheel velocities
         wheel3_speed = self.robot_controller.wheels[2].getVelocity()
         wheel4_speed = self.robot_controller.wheels[3].getVelocity()
-        speed = max(0, (wheel3_speed + wheel4_speed) / 2)  # Ensure speed is non-negative
+        speed = max(0, (wheel3_speed + wheel4_speed) / 2)
 
         image_bytes = self.robot_controller.camera.getImage()
         width = self.robot_controller.camera.getWidth()
@@ -142,18 +141,16 @@ class LineFollowingEnv(gym.Env):
 
     def _calculate_reward(self, observation):
         track_direction, track_offset_from_middle, speed = observation
-        max_offset = 0.5  # Define maximum allowable offset from the middle
-
+        max_offset = 0.5
+        
         if abs(track_offset_from_middle) > max_offset:
             print(f"[Notification]: Robot is off-track. Offset: {track_offset_from_middle:.2f}")
-            return -100, True  # Large penalty for going off track and terminate episode
+            return -10, True  # Large penalty for going off track and terminate episode
 
-        reward = 10 - abs(track_offset_from_middle) * 20  # Adjust penalty based on distance
-        reward += 2  # Base reward for staying on track
-
-        # Add penalty for zero speed
-        if speed == 0:
-            reward -= 5
+        reward = 5 - abs(track_offset_from_middle) * 10 # deviation from line reward
+        reward += 2  # Base reward
+        reward += (speed - 2) * 5  # Speed reward
+        reward /= 10
         
         if self.step_count % self.observation_log_interval == 0:
             print(f"[Observation]: Reward: {reward:.2f}")
@@ -169,10 +166,14 @@ if __name__ == "__main__":
 
     # Define Q-learning configuration
     config = {
-        "buckets_sizes": [[0.33, 0.34, 0.33], [0.25, 0.5, 0.25], [0.5, 0.5]],  # Include speed discretization
-        "alpha": 0.2,
+        "buckets_sizes": [[0.33, 0.34, 0.33], [0.25, 0.5, 0.25], [0.5, 0.5]],
+        "epsilon_max": 0.8,
+        "epsilon_min": 0.1,
+        "epsilon_decay": 0.2,
+        "alpha_max": 0.5,
+        "alpha_min": 0.1,
+        "alpha_decay": 0.2,
         "gamma": 0.99,
-        "epsilon": 0.5
     }
 
     # Initialize Q-learner and train
@@ -181,4 +182,4 @@ if __name__ == "__main__":
 
     # Test the trained model
     print("Testing trained model...")
-    learner.test(episodes=10)
+    learner.test(episodes=2)
