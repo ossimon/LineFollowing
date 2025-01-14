@@ -21,9 +21,6 @@ class RobotController:
         # Store the initial position and rotation of the robot
         self.initial_position = self.translation_field.getSFVec3f()
         self.initial_rotation = self.rotation_field.getSFRotation()
-
-        self.last_steering = 0
-        self.last_speed = 0
         
         self.wheels = [self.robot.getDevice(name) for name in ["left_steer", "right_steer", "wheel3", "wheel4"]]
         self.prepare_wheels()
@@ -35,9 +32,13 @@ class RobotController:
         self.wheels[3].setPosition(float('inf'))
         self.set_steering_and_speed(0, 0)
 
-    def set_steering_and_speed(self, steering, speed):
-        self.last_steering = steering
-        self.last_speed = speed
+    def set_steering_and_speed(self, speed_adjustment, steering_adjustment):
+        speed = 2
+        steering = 0
+
+        speed += speed_adjustment
+        steering += steering_adjustment * 0.4
+
         self.wheels[0].setPosition(steering)
         self.wheels[1].setPosition(steering)
         self.wheels[2].setVelocity(speed)
@@ -90,26 +91,10 @@ class LineFollowingEnv(gym.Env):
         return self._get_observation()
 
     def step(self, action):
-        # Retrieve multipliers based on action
-        speed_multiplier, steering_multiplier = self.actions[action]
-
-        # Capture the current image from the robot's camera
-        image_bytes = self.robot_controller.camera.getImage()
-        width = self.robot_controller.camera.getWidth()
-        height = self.robot_controller.camera.getHeight()
-        image = bytes_to_image(image_bytes, width, height)
-
-        # Process the image to extract track direction and offset
-        extracted_track = extract_track(image)
-        m, c = process_track_into_line(extracted_track)
-        track_direction, track_offset_from_middle = get_track_properties(m, c, extracted_track.shape)
-
-        # Calculate speed and steering dynamically
-        speed = 2 + speed_multiplier * (0.5 - abs(track_offset_from_middle))
-        steering = -steering_multiplier * track_offset_from_middle
-
+        speed_adjustment, steering_adjustment = self.actions[action]
+        
         # Apply the calculated speed and steering to the robot
-        self.robot_controller.set_steering_and_speed(steering, speed)
+        self.robot_controller.set_steering_and_speed(speed_adjustment, steering_adjustment)
         self.robot_controller.run_simulation_for_time(0.1)
 
         # Get the observation after applying the action
@@ -142,15 +127,18 @@ class LineFollowingEnv(gym.Env):
     def _calculate_reward(self, observation):
         track_direction, track_offset_from_middle, speed = observation
         max_offset = 0.5
+
+        reward = 0
         
         if abs(track_offset_from_middle) > max_offset:
+            reward = -100
             print(f"[Notification]: Robot is off-track. Offset: {track_offset_from_middle:.2f}")
-            return -10, True  # Large penalty for going off track and terminate episode
+            print(f"[Observation]: Reward: {reward:.2f}")
+            return reward, True  # Large penalty for going off track and terminate episode
 
-        reward = 5 - abs(track_offset_from_middle) * 10 # deviation from line reward
-        reward += 2  # Base reward
-        reward += (speed - 2) * 5  # Speed reward
-        reward /= 10
+        reward += (max_offset - abs(track_offset_from_middle)) * 10 # deviation from line reward
+        reward += 0.1  # Base reward
+        reward += (speed - 1) * 0.1 # Speed reward
         
         if self.step_count % self.observation_log_interval == 0:
             print(f"[Observation]: Reward: {reward:.2f}")
