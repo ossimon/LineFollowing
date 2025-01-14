@@ -41,7 +41,7 @@ class RobotController:
         steering = 0
 
         speed += speed_adjustment
-        steering += steering_adjustment * 0.4
+        steering += steering_adjustment * 0.5
 
         self.wheels[0].setPosition(steering)
         self.wheels[1].setPosition(steering)
@@ -176,7 +176,7 @@ class LineFollowingEnv(gym.Env):
         max_offset = 1
 
         if track_offset_from_middle == 0 and track_direction == 0:
-            reward = -100
+            reward = -10
             print(f"[Notification]: Robot is off-track. Offset: {track_offset_from_middle:.2f}")
             print(f"[Observation]: Reward: {reward:.2f}")
             return reward, True  # Large penalty for going off track and terminate episode
@@ -206,13 +206,15 @@ if __name__ == "__main__":
 
     # Define Q-learning configuration
     config = {
-        "buckets_sizes": [[0.33, 0.34, 0.33], [0.25, 0.5, 0.25], [0.5, 0.5]],
+        "buckets_sizes": [[0.35, 0.125, 0.05, 0.125, 0.35], [0.3, 0.15, 0.1, 0.15, 0.3], [0.33, 0.34, 0.33]],
+        "lower_bounds": [-1, -0.5, 0],
+        "upper_bounds": [1, 0.5, 5],
         "epsilon_max": 0.8,
         "epsilon_min": 0.1,
-        "epsilon_decay": 0.2,
+        "epsilon_decay": 0.15,
         "alpha_max": 0.5,
         "alpha_min": 0.1,
-        "alpha_decay": 0.2,
+        "alpha_decay": 0.15,
         "gamma": 0.99,
     }
 
