@@ -56,3 +56,28 @@ def get_track_line_coordinates(
         track_start_coordinates[1] + track_direction * track_image_shape[0] // 2,
     )
     return track_start_coordinates, track_end_coordinates
+
+
+def simulate_camera_view(track_image, camera_position, z_angle, side_length):
+    x, y = camera_position
+    half_side = side_length / 2
+
+    offset_x = -half_side * np.sin(np.radians(z_angle))
+    offset_y = -half_side * np.cos(np.radians(z_angle))
+
+    center_x = x + offset_x
+    center_y = y + offset_y
+
+    rotation_matrix = cv2.getRotationMatrix2D((center_x, center_y), 360 - z_angle, 1.0)
+
+    height, width = track_image.shape[:2]
+    rotated_image = cv2.warpAffine(track_image, rotation_matrix, (width, height), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT, borderValue=0)
+
+    start_x = int(center_x - half_side)
+    start_y = int(center_y - half_side)
+    end_x = int(center_x + half_side)
+    end_y = int(center_y + half_side)
+
+    cropped_square = rotated_image[start_y:end_y, start_x:end_x]
+
+    return cropped_square

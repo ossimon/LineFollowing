@@ -2,18 +2,22 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 import numpy as np
+from math import ceil
 import cv2
 from controller import Supervisor
-from controllers.track_recognition import extract_track, process_track_into_line, get_track_properties
+from controllers.track_recognition import extract_track, process_track_into_line, get_track_properties, simulate_camera_view
 from controllers.image_processing import bytes_to_image, save_image
 from controllers.q_learning import  QLearner
 
+TRACK_DIRECTORY = "../../textures/hard_track.png"
+
 class RobotController:
-    def __init__(self, time_step=64):
+    def __init__(self, time_step=64, use_camera=True):
         self.robot = Supervisor()
         self.time_step = time_step
-        self.camera = self.robot.getDevice("camera")
-        self.camera.enable(time_step)
+        if use_camera:
+            self.camera = self.robot.getDevice("camera")
+            self.camera.enable(time_step)
 
         self.translation_field = self.robot.getFromDef("ROBOT").getField("translation")
         self.rotation_field = self.robot.getFromDef("ROBOT").getField("rotation")
@@ -52,19 +56,45 @@ class RobotController:
         robot_node.resetPhysics()
         print("[Notification]: Robot position and rotation reset to initial values.")
 
+    def get_robots_position_and_rotation(self, track):
+        robot_x = self.translation_field.getSFVec3f()[0]
+        robot_y = -1 * self.translation_field.getSFVec3f()[1]
+        robot_x += 2.5
+        robot_y += 2.5
+        robot_x /= 5
+        robot_y /= 5
+        robot_x *= track.shape[1] # 0 <= robot_x < track.shape[1]
+        robot_y *= track.shape[0] # 0 <= robot_y < track.shape[0]
+        robot_x = int(robot_x)
+        robot_y = int(robot_y)
+
+        rotation_list = self.rotation_field.getSFRotation()
+        rotation = rotation_list[3]
+        rotation *= -1 if rotation_list[2] < 0 else 1
+        rotation += np.pi
+        
+        return (robot_x, robot_y), rotation
+
     def run_simulation_for_time(self, duration):
-        steps = int(duration * 1000 / self.time_step)
+        steps = ceil(duration * 1000 / self.time_step)
         for _ in range(steps):
             self.robot.step(self.time_step)
+
+    def run_one_step(self):
+        self.robot.step(self.time_step)
 
 # Line Following Environment
 import gym
 from gym import spaces
 
 class LineFollowingEnv(gym.Env):
-    def __init__(self, robot_controller):
+    def __init__(self, robot_controller, use_camera=True):
         super(LineFollowingEnv, self).__init__()
         self.robot_controller = robot_controller
+        self.use_camera = use_camera
+
+        self.track_image = cv2.imread(TRACK_DIRECTORY, cv2.IMREAD_GRAYSCALE)
+        self.track_image = np.array(self.track_image, dtype=np.uint8)
 
         self.observation_space = spaces.Box(
             low=np.array([-np.inf, -np.inf, 0]),  # Speed lower bound is 0
@@ -95,7 +125,7 @@ class LineFollowingEnv(gym.Env):
         
         # Apply the calculated speed and steering to the robot
         self.robot_controller.set_steering_and_speed(speed_adjustment, steering_adjustment)
-        self.robot_controller.run_simulation_for_time(0.1)
+        self.robot_controller.run_one_step()
 
         # Get the observation after applying the action
         observation = self._get_observation()
@@ -103,18 +133,35 @@ class LineFollowingEnv(gym.Env):
         if done:
             print("[Notification]: Episode ended. Robot is out of track.")
         return observation, reward, done, {}
+    
+    def _get_camera_view(self):
+        image_bytes = self.robot_controller.camera.getImage()
+        width = self.robot_controller.camera.getWidth()
+        height = self.robot_controller.camera.getHeight()
+        image = bytes_to_image(image_bytes, width, height)
+        return image
+    
+    def _simulate_camera_view(self):
+        position, rotation = self.robot_controller.get_robots_position_and_rotation(self.track_image)
+        return simulate_camera_view(
+            self.track_image,
+            position,
+            np.degrees(rotation) + 90,
+            self.track_image.shape[0] // 15
+        )
 
     def _get_observation(self):
         wheel3_speed = self.robot_controller.wheels[2].getVelocity()
         wheel4_speed = self.robot_controller.wheels[3].getVelocity()
         speed = max(0, (wheel3_speed + wheel4_speed) / 2)
 
-        image_bytes = self.robot_controller.camera.getImage()
-        width = self.robot_controller.camera.getWidth()
-        height = self.robot_controller.camera.getHeight()
-        image = bytes_to_image(image_bytes, width, height)
+        if self.use_camera:
+            camera_view = self._get_camera_view()
+            extracted_track = extract_track(camera_view)
+        else:
+            camera_view = self._simulate_camera_view()
+            extracted_track = np.where(camera_view > 0, 0, 1).astype(np.uint8)
 
-        extracted_track = extract_track(image)
         m, c = process_track_into_line(extracted_track)
         track_direction, track_offset_from_middle = get_track_properties(m, c, extracted_track.shape)
 
@@ -126,18 +173,16 @@ class LineFollowingEnv(gym.Env):
 
     def _calculate_reward(self, observation):
         track_direction, track_offset_from_middle, speed = observation
-        max_offset = 0.5
+        max_offset = 1
 
-        reward = 0
-        
-        if abs(track_offset_from_middle) > max_offset:
+        if track_offset_from_middle == 0 and track_direction == 0:
             reward = -100
             print(f"[Notification]: Robot is off-track. Offset: {track_offset_from_middle:.2f}")
             print(f"[Observation]: Reward: {reward:.2f}")
             return reward, True  # Large penalty for going off track and terminate episode
 
+        reward = 0.1  # Base reward
         reward += (max_offset - abs(track_offset_from_middle)) * 10 # deviation from line reward
-        reward += 0.1  # Base reward
         reward += (speed - 1) * 0.1 # Speed reward
         
         if self.step_count % self.observation_log_interval == 0:
@@ -146,11 +191,18 @@ class LineFollowingEnv(gym.Env):
         return reward, False
 
 if __name__ == "__main__":
+    # Choose between using the camera or
+    # simulating the its view (faster, but less realistic)
+    use_camera = False
+
     # Initialize the robot controller
-    robot_controller = RobotController()
+    robot_controller = RobotController(
+        time_step=64,
+        use_camera=use_camera
+    )
 
     # Create the environment
-    env = LineFollowingEnv(robot_controller)
+    env = LineFollowingEnv(robot_controller, use_camera)
 
     # Define Q-learning configuration
     config = {
@@ -166,7 +218,7 @@ if __name__ == "__main__":
 
     # Initialize Q-learner and train
     learner = QLearner(env, config)
-    learner.train(episodes=10, max_step=1000)
+    learner.train(episodes=100, max_step=1000)
 
     # Test the trained model
     print("Testing trained model...")

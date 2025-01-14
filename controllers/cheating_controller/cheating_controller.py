@@ -6,18 +6,19 @@ import numpy as np
 from controller import Supervisor
 import cv2
 import numpy as np
-from controllers.track_recognition import extract_track, process_track_into_line, get_track_properties
-from controllers.image_processing import bytes_to_image, save_image
+from controllers.track_recognition import process_track_into_line, get_track_properties
 
+TRACK_DIRECTORY = "../../textures/hard_track.png"
 TRACK_BOUNDARIES_DIRECTORY = "../../textures/hard_track_with_grass.png"
 
-TIME_STEP = 64
+TIME_STEP = 128
 SAMPLING_PERIOD = 100
 
 wheels = [None] * 4
 last_steering = 0
 last_speed = 0
 
+track = None
 boundaries = None
 
 MAKE_SS = True
@@ -42,22 +43,33 @@ def set_steering_and_speed(steering, speed):
     wheels[2].setVelocity(speed)
     wheels[3].setVelocity(speed)
 
-def decide_action(image, speed_multiplier, steering_multiplier):
-    extracted_track = extract_track(image)
-    
-    m, c = process_track_into_line(extracted_track)
+def decide_action(translation_field, rotation_field, speed_multiplier, steering_multiplier):
+    global track 
+    robot_x = translation_field.getSFVec3f()[0]
+    robot_y = -1 * translation_field.getSFVec3f()[1]
+    robot_x += 2.5
+    robot_y += 2.5
+    robot_x /= 5
+    robot_y /= 5
+    robot_x *= track.shape[1] # 0 <= robot_x < track.shape[1]
+    robot_y *= track.shape[0] # 0 <= robot_y < track.shape[0]
+    robot_x = int(robot_x)
+    robot_y = int(robot_y)
 
-    if m == 0 and c == 0:
-        save_image(image, "c0m0img.png")
-        save_image(extracted_track, "c0m0track.png")
-        for pixel in image[-1]:
-            print(pixel)
-        print(extracted_track[-1])
+    rotation_list = rotation_field.getSFRotation()
+    rotation = rotation_list[3]
+    rotation *= -1 if rotation_list[2] < 0 else 1
+    rotation += np.pi
+    print(f"Robot position: {robot_x}, {robot_y}, rotation: {rotation}")
+
+    extracted_track = track[robot_y-10:robot_y+10, robot_x-10:robot_x+10]
+
+    m, c = process_track_into_line(extracted_track)
 
     track_direction, track_offset_from_the_middle = get_track_properties(m, c, extracted_track.shape)
 
-    print(f"m: {m:.2f}, c: {c:.2f}")
-    print(f"Track direction: {track_direction:.2f}, track offset from the middle: {track_offset_from_the_middle:.2f}")
+    # print(f"m: {m:.2f}, c: {c:.2f}")
+    # print(f"Track direction: {track_direction:.2f}, track offset from the middle: {track_offset_from_the_middle:.2f}")
 
     proportion = track_offset_from_the_middle
     speed = 2
@@ -84,39 +96,24 @@ def out_ouf_bounds(translation_field):
         return True, "too far from the track"
     return False, ""
 
-def run_robot(translation_field, speed_multiplier, steering_multiplier, timeout=60):
+def run_robot(translation_field, rotation_field, speed_multiplier, steering_multiplier, timeout=60):
     step_count = 0
     distance = 0
     steps_to_run = timeout * 1000 / TIME_STEP
-    steps_to_sceenshot = SS_INTERVAL * 1000 // TIME_STEP
-    screenshot_count = 0
 
     global MAKE_SS, SS_ONLY_ONCE
 
     while robot.step(TIME_STEP) != -1:
         if step_count >= steps_to_run:
-            print("Timeout")
+            # print("Timeout")
             break
 
         out_of_bounds, reason = out_ouf_bounds(translation_field)
         if out_of_bounds:
-            print(f"Out of bounds: {reason}")
+            # print(f"Out of bounds: {reason}")
             break
 
-        image_bytes = camera.getImage()
-        width = camera.getWidth()
-        height = camera.getHeight()
-
-        image = bytes_to_image(image_bytes, width, height)
-
-        if (MAKE_SS and step_count % steps_to_sceenshot == 0):
-            print("Taking screenshot")
-            save_image(image, f"ss_{SS_INTERVAL}.png")
-            screenshot_count += 1
-            if SS_ONLY_ONCE:
-                MAKE_SS = False
-
-        speed, steering = decide_action(image, speed_multiplier, steering_multiplier)
+        speed, steering = decide_action(translation_field, rotation_field, speed_multiplier, steering_multiplier)
 
         set_steering_and_speed(steering, speed)
 
@@ -157,25 +154,26 @@ if __name__ == "__main__":
     robot_node = robot.getFromDef("ROBOT")
     translation_field = robot_node.getField("translation")
     rotation_field = robot_node.getField("rotation")
-
-    camera = robot.getDevice("camera")
-    camera.enable(SAMPLING_PERIOD)
     
-    # read the track grass image
-    track_grass_image = cv2.imread(TRACK_BOUNDARIES_DIRECTORY)
-    
-    boundaries = np.zeros((track_grass_image.shape[0], track_grass_image.shape[1]), dtype=np.uint8)
-    boundaries[track_grass_image[:, :, 0] == 255] = 1
+    # read the track image
+    track_image = cv2.imread(TRACK_DIRECTORY, cv2.IMREAD_GRAYSCALE)
+    track = np.array(track_image, dtype=np.uint8)
+    # print(f"Min: {np.min(track)}, Max: {np.max(track)}")
+    # print(f"Shape: {track.shape}")
+    # read the track boundaries image
+    track_boundaries_image = cv2.imread(TRACK_BOUNDARIES_DIRECTORY)
+    boundaries = np.zeros((track_boundaries_image.shape[0], track_boundaries_image.shape[1]), dtype=np.uint8)
+    boundaries[track_boundaries_image[:, :, 0] == 255] = 1
 
     itinial_position = translation_field.getSFVec3f()
     initial_rotation = rotation_field.getSFRotation()
 
     for try_number in range(5):
-        print(f"Try number {try_number}")
+        # print(f"Try number {try_number}")
 
         prepare_wheels()
         reset_robots_position_and_rotation(translation_field, rotation_field, itinial_position, initial_rotation)
 
-        fitness = run_robot(translation_field, speed_multiplier, steering_multiplier, timeout=120)
-        print(f"Fitness: {fitness}")
+        fitness = run_robot(translation_field, rotation_field, speed_multiplier, steering_multiplier, timeout=120)
+        # print(f"Fitness: {fitness}")
 
