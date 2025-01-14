@@ -37,7 +37,7 @@ class RobotController:
         steering = 0
 
         speed += speed_adjustment
-        steering += steering_adjustment * 0.4
+        steering += steering_adjustment * 0.5
 
         self.wheels[0].setPosition(steering)
         self.wheels[1].setPosition(steering)
@@ -131,14 +131,14 @@ class LineFollowingEnv(gym.Env):
         reward = 0
         
         if abs(track_offset_from_middle) > max_offset:
-            reward = -100
+            reward = -10
             print(f"[Notification]: Robot is off-track. Offset: {track_offset_from_middle:.2f}")
             print(f"[Observation]: Reward: {reward:.2f}")
             return reward, True  # Large penalty for going off track and terminate episode
 
-        reward += (max_offset - abs(track_offset_from_middle)) * 10 # deviation from line reward
+        reward += (max_offset - 1.1 * abs(track_offset_from_middle)) * 10 # deviation from line reward
         reward += 0.1  # Base reward
-        reward += (speed - 1) * 0.1 # Speed reward
+        reward += (speed - 1) * 0.05 # Speed reward
         
         if self.step_count % self.observation_log_interval == 0:
             print(f"[Observation]: Reward: {reward:.2f}")
@@ -154,19 +154,21 @@ if __name__ == "__main__":
 
     # Define Q-learning configuration
     config = {
-        "buckets_sizes": [[0.33, 0.34, 0.33], [0.25, 0.5, 0.25], [0.5, 0.5]],
+        "buckets_sizes": [[0.35, 0.125, 0.05, 0.125, 0.35], [0.3, 0.15, 0.1, 0.15, 0.3], [0.33, 0.34, 0.33]],
+        "lower_bounds": [-1, -0.5, 0],
+        "upper_bounds": [1, 0.5, 5],
         "epsilon_max": 0.8,
         "epsilon_min": 0.1,
-        "epsilon_decay": 0.2,
+        "epsilon_decay": 0.15,
         "alpha_max": 0.5,
         "alpha_min": 0.1,
-        "alpha_decay": 0.2,
+        "alpha_decay": 0.15,
         "gamma": 0.99,
     }
 
     # Initialize Q-learner and train
     learner = QLearner(env, config)
-    learner.train(episodes=10, max_step=1000)
+    learner.train(episodes=20, max_step=1000)
 
     # Test the trained model
     print("Testing trained model...")

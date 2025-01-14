@@ -15,8 +15,11 @@ class QLearner:
 
         # Discretize observation space
         observation_shape = self.env.observation_space.shape
-        self.buckets_sizes = config.get("buckets_sizes", [[0.33, 0.34, 0.33], [0.25, 0.5, 0.25], [0.5, 0.5]])  # Updated for speed
+        self.buckets_sizes = config.get("buckets_sizes", [[0.4, 0.2, 0.4], [0.4, 0.2, 0.4], [0.33, 0.34, 0.33]])  # Updated for speed
+        self.lower_bounds = config.get("lower_bounds", [-1, -1, 0])
+        self.upper_bounds = config.get("upper_bounds", [1, 1, 5])
         self.epsilon = config.get("epsilon", 0.1)
+
         self._initialize_q_table()
 
     def _initialize_q_table(self):
@@ -26,7 +29,7 @@ class QLearner:
             self.q_dict[state] = {a: random.uniform(0, 0.1) for a in self.possible_actions}
 
     def discretize(self, observation):
-        return [map_to_buckets(value, -1.0, 1.0, self.buckets_sizes[i]) for i, value in enumerate(observation)]
+        return [map_to_buckets(value, self.lower_bounds[i], self.upper_bounds[i], self.buckets_sizes[i]) for i, value in enumerate(observation)]
 
     def pick_action(self, state, explore=True):
         if explore and random.random() < self.epsilon:
