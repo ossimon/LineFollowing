@@ -9,7 +9,7 @@ from controllers.track_recognition import extract_track, process_track_into_line
 from controllers.image_processing import bytes_to_image, save_image
 from controllers.q_learning import  QLearner
 
-TRACK_DIRECTORY = "../../textures/hard_track.png"
+TRACK_DIRECTORY = "../../textures/Line.png"
 
 class RobotController:
     def __init__(self, time_step=64, use_camera=True):
@@ -18,6 +18,9 @@ class RobotController:
         if use_camera:
             self.camera = self.robot.getDevice("camera")
             self.camera.enable(time_step)
+
+        floor_node = self.robot.getFromDef("FLOOR")
+        self.floor_size = floor_node.getField("size").getSFVec3f()
 
         self.translation_field = self.robot.getFromDef("ROBOT").getField("translation")
         self.rotation_field = self.robot.getFromDef("ROBOT").getField("rotation")
@@ -59,10 +62,8 @@ class RobotController:
     def get_robots_position_and_rotation(self, track):
         robot_x = self.translation_field.getSFVec3f()[0]
         robot_y = -1 * self.translation_field.getSFVec3f()[1]
-        robot_x += 2.5
-        robot_y += 2.5
-        robot_x /= 5
-        robot_y /= 5
+        robot_x = robot_x / self.floor_size[0] + 0.5
+        robot_y = robot_y / self.floor_size[1] + 0.5
         robot_x *= track.shape[1] # 0 <= robot_x < track.shape[1]
         robot_y *= track.shape[0] # 0 <= robot_y < track.shape[0]
         robot_x = int(robot_x)
@@ -197,7 +198,7 @@ if __name__ == "__main__":
 
     # Initialize the robot controller
     robot_controller = RobotController(
-        time_step=64,
+        time_step=128,
         use_camera=use_camera
     )
 

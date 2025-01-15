@@ -28,6 +28,8 @@ def extract_track(img):
 
 def process_track_into_line(processed_image):
     rotated_image = cv2.rotate(processed_image, cv2.ROTATE_90_CLOCKWISE)
+    if rotated_image is None:
+        return 0, 0
     # linear regression
     y, x = np.where(rotated_image > 0)
     A = np.vstack([x, np.ones(len(x))]).T

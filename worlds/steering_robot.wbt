@@ -16,7 +16,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.49308100132475946 0.49928398748826736 0.7124511393565093 1.8916912886598203
-  position -0.39596318294120736 -4.126383085866985 11.972233179691486
+  position -0.4471971523253306 -8.22828058960601 22.87080267919296
   follow "robot"
   followType "None"
 }
@@ -24,13 +24,13 @@ TexturedBackground {
 }
 TexturedBackgroundLight {
 }
-Floor {
-  size 5 5
+DEF FLOOR Floor {
+  size 5 11
   tileSize 5 5
   appearance PBRAppearance {
     baseColorMap ImageTexture {
       url [
-        "../textures/hard_track.png"
+        "../textures/Line.png"
       ]
     }
     roughness 1
@@ -38,7 +38,7 @@ Floor {
   }
 }
 DEF ROBOT Robot {
-  translation -1.94038 -0.280031 0.04
+  translation 0 -2 0.04
   rotation 0 0 -1 -1.5707953071795862
   children [
     JetBotRaspberryPiCamera {
@@ -107,7 +107,7 @@ DEF ROBOT Robot {
       ]
       endPoint DEF Wheel1 Solid {
         translation 0.075 0.0725 0
-        rotation 1 1.3194274296012771e-14 6.636082735223269e-15 1.5707996938993234
+        rotation 1 1.2223394539094678e-14 5.161670267989002e-15 1.5707996938992528
         children [
           DEF WHEEL Shape {
             appearance PBRAppearance {
@@ -155,7 +155,7 @@ DEF ROBOT Robot {
       ]
       endPoint DEF Wheel2 Solid {
         translation 0.075 -0.0725 0
-        rotation 1 8.610348014768654e-15 1.5131740595510523e-14 1.57079969389938
+        rotation 1 8.046710303708852e-15 1.4933026103254812e-14 1.570799693899312
         children [
           USE WHEEL
         ]
@@ -177,8 +177,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint DEF Wheel3 Solid {
-        translation -0.07500000000000001 0.08250000000000068 -5.510028035265896e-18
-        rotation 1 -3.7730192466487225e-10 3.7729854897176924e-10 1.5707996938993893
+        translation -0.07499999999999996 0.08250000000000068 1.044058998464124e-16
+        rotation 1 -3.736394546570884e-10 3.736345677525381e-10 1.5707996938993334
         children [
           USE WHEEL
         ]
@@ -199,8 +199,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint DEF Wheel4 Solid {
-        translation -0.07499999999999996 -0.0825000000000029 -3.378333624605886e-17
-        rotation 1 -7.617471317606674e-10 -9.073374784506339e-10 1.570799689155092
+        translation -0.0749999999999999 -0.0825000000000029 -6.428114788254392e-17
+        rotation 1 -7.580890187434494e-10 -9.109964157650423e-10 1.5707996891550493
         children [
           USE WHEEL
         ]
@@ -214,6 +214,6 @@ DEF ROBOT Robot {
   boundingObject USE BODY
   physics Physics {
   }
-  controller "baseline"
+  controller "q_learning_controller"
   supervisor TRUE
 }
