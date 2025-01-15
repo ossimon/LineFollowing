@@ -16,7 +16,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation -0.49308100132475946 0.49928398748826736 0.7124511393565093 1.8916912886598203
-  position -0.4471971523253306 -8.22828058960601 22.87080267919296
+  position -0.40371147712447314 -4.746727536055568 13.620462346277812
   follow "robot"
   followType "None"
 }
@@ -25,12 +25,12 @@ TexturedBackground {
 TexturedBackgroundLight {
 }
 DEF FLOOR Floor {
-  size 5 11
+  size 5 5
   tileSize 5 5
   appearance PBRAppearance {
     baseColorMap ImageTexture {
       url [
-        "../textures/Line.png"
+        "../textures/EasyCurve.png"
       ]
     }
     roughness 1
@@ -107,7 +107,7 @@ DEF ROBOT Robot {
       ]
       endPoint DEF Wheel1 Solid {
         translation 0.075 0.0725 0
-        rotation 1 1.2223394539094678e-14 5.161670267989002e-15 1.5707996938992528
+        rotation 1 1.1172170342405966e-14 7.81119683140549e-15 1.570799693899233
         children [
           DEF WHEEL Shape {
             appearance PBRAppearance {
@@ -155,7 +155,7 @@ DEF ROBOT Robot {
       ]
       endPoint DEF Wheel2 Solid {
         translation 0.075 -0.0725 0
-        rotation 1 8.046710303708852e-15 1.4933026103254812e-14 1.570799693899312
+        rotation 1 7.75231846332936e-15 1.583828101242226e-14 1.570799693899286
         children [
           USE WHEEL
         ]
@@ -177,8 +177,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint DEF Wheel3 Solid {
-        translation -0.07499999999999996 0.08250000000000068 1.044058998464124e-16
-        rotation 1 -3.736394546570884e-10 3.736345677525381e-10 1.5707996938993334
+        translation -0.07499999999999996 0.08250000000000068 9.8486530224623e-17
+        rotation 1 -3.7363497990111923e-10 3.7363317429783157e-10 1.570799693899308
         children [
           USE WHEEL
         ]
@@ -199,8 +199,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint DEF Wheel4 Solid {
-        translation -0.0749999999999999 -0.0825000000000029 -6.428114788254392e-17
-        rotation 1 -7.580890187434494e-10 -9.109964157650423e-10 1.5707996891550493
+        translation -0.0749999999999999 -0.0825000000000029 -9.579680973932131e-17
+        rotation 1 -7.580906771508269e-10 -9.109970634271003e-10 1.5707996891550322
         children [
           USE WHEEL
         ]

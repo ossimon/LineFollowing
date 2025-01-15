@@ -9,7 +9,7 @@ from controllers.track_recognition import extract_track, process_track_into_line
 from controllers.image_processing import bytes_to_image, save_image
 from controllers.q_learning import  QLearner
 
-TRACK_DIRECTORY = "../../textures/Line.png"
+TRACK_DIRECTORY = "../../textures/EasyCurve.png"
 
 class RobotController:
     def __init__(self, time_step=64, use_camera=True):
