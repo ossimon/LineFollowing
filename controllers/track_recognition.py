@@ -35,12 +35,18 @@ def process_track_into_line(processed_image):
     A = np.vstack([x, np.ones(len(x))]).T
     m, c = np.linalg.lstsq(A, y, rcond=None)[0]
 
+    if abs(m) > 1:
+        # save rotated image for debugging
+        cv2.imwrite(f"debug_imgs/processed_image_{m:.2f}_{c:.2f}.png", rotated_image * 255)
+
     return m, c
 
 
 def get_track_properties(m, c, track_image_shape):
     if m == 0 and c == 0:
         return 0, 0
+    if abs(m) > 1:
+        m = np.sign(m)
     track_direction = m
     track_offset_from_the_middle = (c / track_image_shape[1] - 0.5) * 2
     return track_direction, track_offset_from_the_middle

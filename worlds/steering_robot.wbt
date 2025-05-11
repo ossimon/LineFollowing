@@ -15,8 +15,8 @@ WorldInfo {
   ]
 }
 Viewpoint {
-  orientation -0.49308100132475946 0.49928398748826736 0.7124511393565093 1.8916912886598203
-  position -0.40371147712447314 -4.746727536055568 13.620462346277812
+  orientation -0.5773502691896258 0.5773502691896258 0.5773502691896258 2.0944
+  position 8.443091496276215e-06 8.443115370844006e-06 12.557469734547743
   follow "robot"
   followType "None"
 }
@@ -30,7 +30,7 @@ DEF FLOOR Floor {
   appearance PBRAppearance {
     baseColorMap ImageTexture {
       url [
-        "../textures/EasyCurve.png"
+        "../textures/RightAngle.png"
       ]
     }
     roughness 1
@@ -45,36 +45,6 @@ DEF ROBOT Robot {
       translation 0.11 0 0.07
       rotation 0 1 0 0.261799
     }
-    DistanceSensor {
-      translation 0.1 0.03 0
-      rotation 0 0 1 0.3
-      children [
-        Shape {
-          geometry DEF DS Box {
-            size 0.01 0.01 0.01
-          }
-        }
-      ]
-      name "ds_left"
-      boundingObject USE DS
-      physics Physics {
-      }
-    }
-    DistanceSensor {
-      translation 0.1 -0.03 0
-      rotation 0 0 1 -0.3
-      children [
-        Shape {
-          geometry DEF DS Box {
-            size 0.01 0.01 0.01
-          }
-        }
-      ]
-      name "ds_right"
-      boundingObject USE DS
-      physics Physics {
-      }
-    }
     DEF BODY Shape {
       appearance PBRAppearance {
         baseColor 0.7 0 0
@@ -82,7 +52,7 @@ DEF ROBOT Robot {
         metalness 0
       }
       geometry Box {
-        size 0.2 0.08 0.05
+        size 0.2 0.05 0.05
       }
     }
     Hinge2Joint {
@@ -91,6 +61,7 @@ DEF ROBOT Robot {
         anchor 0.075 0.0725 0
         minStop -0.5
         maxStop 0.5
+        dampingConstant 10
       }
       jointParameters2 JointParameters {
         axis 0 1 0
@@ -107,7 +78,7 @@ DEF ROBOT Robot {
       ]
       endPoint DEF Wheel1 Solid {
         translation 0.075 0.0725 0
-        rotation 1 1.1172170342405966e-14 7.81119683140549e-15 1.570799693899233
+        rotation 1 1.1363525038652706e-14 7.379422132182069e-15 1.5707996938992326
         children [
           DEF WHEEL Shape {
             appearance PBRAppearance {
@@ -139,6 +110,7 @@ DEF ROBOT Robot {
         anchor 0.075 -0.0725 0
         minStop -0.5
         maxStop 0.5
+        dampingConstant 10
       }
       jointParameters2 JointParameters {
         axis 0 1 0
@@ -155,7 +127,7 @@ DEF ROBOT Robot {
       ]
       endPoint DEF Wheel2 Solid {
         translation 0.075 -0.0725 0
-        rotation 1 7.75231846332936e-15 1.583828101242226e-14 1.570799693899286
+        rotation 1 8.360728266780531e-15 1.613267285280187e-14 1.5707996938992845
         children [
           USE WHEEL
         ]
@@ -177,8 +149,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint DEF Wheel3 Solid {
-        translation -0.07499999999999996 0.08250000000000068 9.8486530224623e-17
-        rotation 1 -3.7363497990111923e-10 3.7363317429783157e-10 1.570799693899308
+        translation -0.07499999999999996 0.08250000000000068 9.964195673689537e-17
+        rotation 1 -3.7363533317132805e-10 3.736332135500773e-10 1.5707996938993067
         children [
           USE WHEEL
         ]
@@ -199,8 +171,8 @@ DEF ROBOT Robot {
         }
       ]
       endPoint DEF Wheel4 Solid {
-        translation -0.0749999999999999 -0.0825000000000029 -9.579680973932131e-17
-        rotation 1 -7.580906771508269e-10 -9.109970634271003e-10 1.5707996891550322
+        translation -0.0749999999999999 -0.0825000000000029 -9.592392350413505e-17
+        rotation 1 -7.580903533198017e-10 -9.109971615577141e-10 1.5707996891550329
         children [
           USE WHEEL
         ]
@@ -214,6 +186,6 @@ DEF ROBOT Robot {
   boundingObject USE BODY
   physics Physics {
   }
-  controller "q_learning_controller"
+  controller "fuzzy_bayesian"
   supervisor TRUE
 }
